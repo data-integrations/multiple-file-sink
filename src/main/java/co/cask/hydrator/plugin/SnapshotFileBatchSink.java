@@ -68,8 +68,8 @@ public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<
     }
   }
 
-  @Override
-  public void prepareRun(BatchSinkContext context) throws DatasetManagementException {
+
+  public void prepareRunAddition(BatchSinkContext context) throws DatasetManagementException {
     // if macros were provided, the dataset still needs to be created
     config.validate();
     if (!context.datasetExists(config.getName())) {
@@ -88,6 +88,7 @@ public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<
     }
     context.addOutput(Output.ofDataset(config.getName(),
                                        snapshotFileSet.getOutputArguments(context.getLogicalStartTime(), arguments)));
+
   }
 
   @Override

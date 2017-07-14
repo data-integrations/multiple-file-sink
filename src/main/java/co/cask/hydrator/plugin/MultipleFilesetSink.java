@@ -4,6 +4,7 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
@@ -11,17 +12,23 @@ import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.hydrator.common.HiveSchemaConverter;
+import co.cask.hydrator.common.batch.JobUtils;
 import co.cask.hydrator.plugin.common.FileSetUtil;
 import co.cask.hydrator.plugin.common.StructuredToAvroTransformer;
+import co.cask.hydrator.plugin.dataset.SnapshotFileSet;
 import org.apache.avro.SchemaParseException;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
+import org.apache.hadoop.mapreduce.Job;
 import parquet.avro.AvroParquetInputFormat;
 import parquet.avro.AvroParquetOutputFormat;
+import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -46,9 +53,33 @@ public class MultipleFilesetSink extends SnapshotFileBatchSink<Void, GenericReco
   }
 
   @Override
+  public void prepareRun(BatchSinkContext context) throws Exception {
+
+    super.prepareRunAddition(context);
+    Job job;
+    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    // Switch the context classloader to plugin class' classloader (PluginClassLoader) so that
+    // when Job/Configuration is created, it uses PluginClassLoader to load resources (hbase-default.xml)
+    // which is present in the plugin jar and is not visible in the CombineClassLoader (which is what oldClassLoader
+    // points to).
+    Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+    try {
+      job = JobUtils.createInstance();
+    } finally {
+      // Switch back to the original
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+    }
+
+    job.setOutputFormatClass(MultipleFilesetOutputFormat.class);
+    Configuration conf = job.getConfiguration();
+
+    context.addOutput(Output.of(config.getName(), new MultipleFilesetOutputFormatProvider(config, conf)));
+  }
+
+  @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
-    recordTransformer = new StructuredToAvroTransformer(config.schema);
+    recordTransformer = new StructuredToAvroTransformer(config.schema, null);
   }
 
   @Override
