@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.hydrator.plugin.common;
+package co.cask.hydrator.plugin;
 
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Macro;
@@ -46,15 +46,15 @@ import javax.annotation.Nullable;
  * @param <KEY_OUT> the type of key the sink outputs
  * @param <VAL_OUT> the type of value the sink outputs
  */
-public abstract class FileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<StructuredRecord, KEY_OUT, VAL_OUT> {
-  private static final Logger LOG = LoggerFactory.getLogger(FileBatchSink.class);
+public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<StructuredRecord, KEY_OUT, VAL_OUT> {
+  private static final Logger LOG = LoggerFactory.getLogger(co.cask.hydrator.plugin.batch.sink.SnapshotFileBatchSink.class);
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final SnapshotFileSetBatchSinkConfig config;
   private SnapshotFileSet snapshotFileSet;
 
-  public FileBatchSink(SnapshotFileSetBatchSinkConfig config) {
+  public SnapshotFileBatchSink(SnapshotFileSetBatchSinkConfig config) {
     this.config = config;
   }
 
