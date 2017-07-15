@@ -15,6 +15,7 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.hydrator.common.HiveSchemaConverter;
 import co.cask.hydrator.common.batch.JobUtils;
@@ -39,9 +40,9 @@ import javax.annotation.Nullable;
 /**
  * {@link SnapshotFileBatchSink} that stores data in Parquet format.
  */
-@Plugin(type = "batchsink")
-@Name("SnapshotParquet")
-@Description("Sink for a SnapshotFileSet that writes data in Parquet format.")
+@Plugin(type = BatchSink.PLUGIN_TYPE)
+@Name("MultipleFilesetSink")
+@Description("Sink for a MultiFileSet that writes data in Parquet format and multiple fileset")
 public class MultipleFilesetSink extends SnapshotFileBatchSink<Void, GenericRecord> {
   private final MultipleFilesetSink.MultipleFilesetSinkConfig config;
 

@@ -38,7 +38,7 @@
     <hive-exec.version>1.2.1</hive-exec.version>
     <widgets.dir>widgets</widgets.dir>
     <docs.dir>docs</docs.dir>
-    <app.parents>system:cdap-etl-batch[4.3.0-SNAPSHOT,4.4.0-SNAPSHOT),system:cdap-etl-realtime[4.3.0-SNAPSHOT,4.4.0-SNAPSHOT),system:cdap-data-pipeline[4.3.0-SNAPSHOT,4.4.0-SNAPSHOT),system:cdap-data-streams[4.3.0-SNAPSHOT,4.4.0-SNAPSHOT)</app.parents>
+    <app.parents>system:cdap-etl-batch[4.2.0-SNAPSHOT,4.4.0-SNAPSHOT),system:cdap-etl-realtime[4.2.0-SNAPSHOT,4.4.0-SNAPSHOT),system:cdap-data-pipeline[4.3.0-SNAPSHOT,4.4.0-SNAPSHOT),system:cdap-data-streams[4.3.0-SNAPSHOT,4.4.0-SNAPSHOT)</app.parents>
     <!-- this is here because project.basedir evaluates to null in the script build step -->
     <main.basedir>${project.basedir}</main.basedir>
   </properties>
@@ -310,7 +310,7 @@
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
               <!--Only @Plugin classes in the export packages will be included as plugin-->
-              <_exportcontents>co.cask.hydrator.*</_exportcontents>
+              <_exportcontents>co.cask.hydrator.plugin</_exportcontents>
             </instructions>
           </configuration>
           <executions>
@@ -424,7 +424,7 @@
         <configuration>
           <instructions>
             <_exportcontents>
-              co.cask.hydrator.plugin*;
+              co.cask.hydrator.plugin;
               org.apache.avro.mapreduce;
               parquet.avro.*;
               org.apache.orc.*;
