@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "spec-version": "1.3"
+  },
+  "configuration-groups": [
+    {
+      "label": "Multiple Fileset",
+      "properties": [
+        {
+          "widget-type": "dataset-selector",
+          "label": "Dataset Name",
+          "name": "name"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Dataset Base Path",
+          "name": "basePath",
+          "placeholder": "E.g. /tmp/folder/"
+        },
+        {
+          "widget-type": "csv",
+          "label": "Partition Field Names",
+          "name": "fieldNames"
+        },
+        {
+          "widget-type": "select",
+          "label": "Compression Codec",
+          "name": "compressionCodec",
+          "widget-attributes": {
+            "values": [
+              "None",
+              "Snappy",
+              "GZip",
+              "LZO"
+            ],
+            "default": "None"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "schema",
+      "widget-type": "schema",
+      "widget-attributes": {
+        "schema-types": [
+          "boolean",
+          "int",
+          "long",
+          "float",
+          "double",
+          "string"
+        ],
+        "schema-default-type": "string"
+      }
+    }
+  ],
+  "jump-config": {
+    "datasets": [{
+      "ref-property-name": "name"
+    }]
+  }
+}

@@ -91,24 +91,25 @@ public class MultipleFilesetSink extends SnapshotFileBatchSink<Void, GenericReco
 
   @Override
   protected void addFileProperties(FileSetProperties.Builder propertiesBuilder) {
-    // parse it to make sure its valid
+    String schema = config.schema.toLowerCase();
+    // parse to make sure it's valid
+    new org.apache.avro.Schema.Parser().parse(schema);
+    String hiveSchema;
     try {
-      new org.apache.avro.Schema.Parser().parse(config.schema);
-    } catch (SchemaParseException e) {
-      throw new IllegalArgumentException("Could not parse schema: " + e.getMessage(), e);
+      hiveSchema = HiveSchemaConverter.toHiveSchema(Schema.parseJson(schema));
+    } catch (UnsupportedTypeException | IOException e) {
+      throw new RuntimeException("Error: Schema is not valid ", e);
     }
-    propertiesBuilder.addAll(FileSetUtil.getAvroCompressionConfiguration(config.compressionCodec, config.schema,
-                                                                         true));
+    propertiesBuilder.addAll(FileSetUtil.getParquetCompressionConfiguration(config.compressionCodec, config.schema,
+                                                                            true));
 
     propertiesBuilder
-      .setInputFormat(AvroKeyInputFormat.class)
-      .setOutputFormat(AvroKeyOutputFormat.class)
+      .setInputFormat(AvroParquetInputFormat.class)
+      .setOutputFormat(AvroParquetOutputFormat.class)
       .setEnableExploreOnCreate(true)
-      .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
-      .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
-      .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", config.schema)
-      .add(DatasetProperties.SCHEMA, config.schema);
+      .setExploreFormat("parquet")
+      .setExploreSchema(hiveSchema.substring(1, hiveSchema.length() - 1))
+      .add(DatasetProperties.SCHEMA, schema);
   }
 
   /**
