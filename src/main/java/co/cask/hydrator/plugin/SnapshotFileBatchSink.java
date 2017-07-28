@@ -75,7 +75,8 @@ public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<
     if (!context.datasetExists(config.getName())) {
       FileSetProperties.Builder fileProperties = SnapshotFileSet.getBaseProperties(config);
       addFileProperties(fileProperties);
-      context.createDataset(config.getName(), PartitionedFileSet.class.getName(), fileProperties.build());
+      context.createDataset(config.getName(), PartitionedFileSet.class.getName()+"0", fileProperties.build());
+      context.createDataset(config.getName(), PartitionedFileSet.class.getName()+"1", fileProperties.build());
     }
 
     PartitionedFileSet files = context.getDataset(config.getName());

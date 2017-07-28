@@ -20,11 +20,11 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class MultipleFilesetOutputFormat extends FileOutputFormat<Text, IntWritable> {
 
-  protected static class XMLRecordWriter extends RecordWriter<Text, IntWritable> {
+  protected static class MultipleFilesetRecordWriter extends RecordWriter<Text, IntWritable> {
 
     private DataOutputStream out;
 
-    public XMLRecordWriter(DataOutputStream out) throws IOException
+    public MultipleFilesetRecordWriter(DataOutputStream out) throws IOException
 
     {
 
@@ -88,8 +88,10 @@ public class MultipleFilesetOutputFormat extends FileOutputFormat<Text, IntWrita
 
     FSDataOutputStream fileOut = fs.create(file, false);
 
-    return new XMLRecordWriter(fileOut);
+    return new MultipleFilesetRecordWriter(fileOut);
 
   }
+
+
 
 }

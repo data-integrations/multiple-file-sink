@@ -32,7 +32,9 @@ import parquet.avro.AvroParquetOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -131,6 +133,7 @@ public class MultipleFilesetSink extends SnapshotFileBatchSink<Void, GenericReco
       this.compressionCodec = compressionCodec;
     }
 
+
     @Override
     public void validate() {
       super.validate();
@@ -156,7 +159,7 @@ public class MultipleFilesetSink extends SnapshotFileBatchSink<Void, GenericReco
 
     @Override
     public String getOutputFormatClassName() {
-      return "";
+      return MultipleFilesetOutputFormat.class.getName();
     }
 
     @Override
