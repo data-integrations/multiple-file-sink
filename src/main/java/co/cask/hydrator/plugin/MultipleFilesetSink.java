@@ -62,7 +62,7 @@ public class MultipleFilesetSink extends SnapshotFileBatchSink<Void, GenericReco
     Job job;
     ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
     // Switch the context classloader to plugin class' classloader (PluginClassLoader) so that
-    // when Job/Configuration is created, it uses PluginClassLoader to load resources (hbase-default.xml)
+    // when Job/Conwfiguration is created, it uses PluginClassLoader to load resources (hbase-default.xml)
     // which is present in the plugin jar and is not visible in the CombineClassLoader (which is what oldClassLoader
     // points to).
     Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
