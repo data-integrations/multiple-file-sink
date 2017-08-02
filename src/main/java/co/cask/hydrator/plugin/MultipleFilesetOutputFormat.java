@@ -6,7 +6,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -14,14 +13,12 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
 public class MultipleFilesetOutputFormat extends FileOutputFormat<NullWritable, StructuredRecord> {
 
@@ -48,19 +45,17 @@ public class MultipleFilesetOutputFormat extends FileOutputFormat<NullWritable, 
     return Schema.recordOf("file.record", fields);
   }
 
+  protected static class MultipleFilesetOutputFormatRecordWriter extends RecordWriter<NullWritable, StructuredRecord> {
 
-
-  protected static class MultipleFilesetOutputFormatRecordWriter extends RecordWriter<Text, IntWritable> {
-
-    private final RecordWriter<LongWritable, Text> delegate;
+    private final RecordWriter<NullWritable, StructuredRecord> delegate;
     private final Schema schema;
     private final String pathField;
     private final String path;
     private DataOutputStream out;
 
 
-    private MultipleFilesetOutputFormatRecordWriter (RecordWriter<LongWritable, Text> delegate, @Nullable String pathField,
-                                     String path, DataOutputStream out) {
+    private MultipleFilesetOutputFormatRecordWriter
+      (RecordWriter<NullWritable, StructuredRecord> delegate, @Nullable String pathField, String path, DataOutputStream out) {
 
       this.delegate = delegate;
       this.pathField = pathField;
@@ -70,7 +65,8 @@ public class MultipleFilesetOutputFormat extends FileOutputFormat<NullWritable, 
 
     }
 
-    public synchronized void write(Text key, IntWritable value) throws IOException
+    @Override
+    public synchronized void write(NullWritable key, StructuredRecord value) throws IOException
 
     {
 
@@ -111,7 +107,8 @@ public class MultipleFilesetOutputFormat extends FileOutputFormat<NullWritable, 
 
   }
 
-  public RecordWriter<NullWritable, StructuredRecord> getRecordWriter throws InterruptedException(
+  @Override
+  public RecordWriter<NullWritable, StructuredRecord> getRecordWriter(
 
     TaskAttemptContext context)
 
@@ -125,8 +122,13 @@ public class MultipleFilesetOutputFormat extends FileOutputFormat<NullWritable, 
 
     FSDataOutputStream fileOut = fs.create(file, false);
 
-
-    RecordWriter<NullWritable, StructuredRecord> delegate = new TextOutputFormat<NullWritable, StructuredRecord>().getRecordWriter(context);
+    RecordWriter<NullWritable, StructuredRecord> delegate = null;
+    try {
+      delegate =
+        new TextOutputFormat<NullWritable, StructuredRecord>().getRecordWriter(context);
+    } catch(InterruptedException ie) {
+      //Log message if required.
+    }
 
 
     String pathField = context.getConfiguration().get(PATH_FIELD);

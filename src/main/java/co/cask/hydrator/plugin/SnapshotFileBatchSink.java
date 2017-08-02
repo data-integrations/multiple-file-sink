@@ -47,7 +47,7 @@ import javax.annotation.Nullable;
  * @param <VAL_OUT> the type of value the sink outputs
  */
 public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<StructuredRecord, KEY_OUT, VAL_OUT> {
-  private static final Logger LOG = LoggerFactory.getLogger(co.cask.hydrator.plugin.batch.sink.SnapshotFileBatchSink.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SnapshotFileBatchSink.class);
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
@@ -68,15 +68,14 @@ public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<
     }
   }
 
-
-  public void prepareRunAddition(BatchSinkContext context) throws DatasetManagementException {
+  @Override
+  public void prepareRun(BatchSinkContext context) throws DatasetManagementException {
     // if macros were provided, the dataset still needs to be created
     config.validate();
     if (!context.datasetExists(config.getName())) {
       FileSetProperties.Builder fileProperties = SnapshotFileSet.getBaseProperties(config);
       addFileProperties(fileProperties);
-      context.createDataset(config.getName(), PartitionedFileSet.class.getName()+"0", fileProperties.build());
-      context.createDataset(config.getName(), PartitionedFileSet.class.getName()+"1", fileProperties.build());
+      context.createDataset(config.getName(), PartitionedFileSet.class.getName(), fileProperties.build());
     }
 
     PartitionedFileSet files = context.getDataset(config.getName());
@@ -89,7 +88,6 @@ public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<
     }
     context.addOutput(Output.ofDataset(config.getName(),
                                        snapshotFileSet.getOutputArguments(context.getLogicalStartTime(), arguments)));
-
   }
 
   @Override
@@ -136,6 +134,7 @@ public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<
     protected String cleanPartitionsOlderThan;
 
     public SnapshotFileSetBatchSinkConfig() {
+
     }
 
     public SnapshotFileSetBatchSinkConfig(String name, @Nullable String basePath,
