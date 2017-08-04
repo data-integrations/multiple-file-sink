@@ -4,7 +4,7 @@
   },
   "configuration-groups": [
     {
-      "label": "Multiple Fileset",
+      "label": "Multiple Snapshot Fileset Sink",
       "properties": [
         {
           "widget-type": "dataset-selector",
@@ -30,8 +30,7 @@
             "values": [
               "None",
               "Snappy",
-              "GZip",
-              "LZO"
+              "Deflate"
             ],
             "default": "None"
           }

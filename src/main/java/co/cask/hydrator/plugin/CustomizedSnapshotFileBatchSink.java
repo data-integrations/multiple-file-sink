@@ -46,15 +46,15 @@ import javax.annotation.Nullable;
  * @param <KEY_OUT> the type of key the sink outputs
  * @param <VAL_OUT> the type of value the sink outputs
  */
-public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<StructuredRecord, KEY_OUT, VAL_OUT> {
-  private static final Logger LOG = LoggerFactory.getLogger(SnapshotFileBatchSink.class);
+public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<StructuredRecord, KEY_OUT, VAL_OUT> {
+  private static final Logger LOG = LoggerFactory.getLogger(CustomizedSnapshotFileBatchSink.class);
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final SnapshotFileSetBatchSinkConfig config;
   private SnapshotFileSet snapshotFileSet;
 
-  public SnapshotFileBatchSink(SnapshotFileSetBatchSinkConfig config) {
+  public CustomizedSnapshotFileBatchSink(SnapshotFileSetBatchSinkConfig config) {
     this.config = config;
   }
 
@@ -119,7 +119,7 @@ public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<
   protected abstract void addFileProperties(FileSetProperties.Builder propertiesBuilder);
 
   /**
-   * Config for SnapshotFileBatchSink
+   * Config for CustomizedSnapshotFileBatchSink
    */
   public static class SnapshotFileSetBatchSinkConfig extends SnapshotFileSetConfig {
     @Description("Optional property that configures the sink to delete old partitions after successful runs. " +
