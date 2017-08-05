@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.hydrator.plugin.common.FileSetUtil;
 import co.cask.hydrator.plugin.common.StructuredToAvroTransformer;
 import org.apache.avro.Schema;
@@ -47,9 +48,9 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 /**
  * {@link CustomizedSnapshotFileBatchSink} that stores data in Avro format.
  */
-@Plugin(type = "batchsink")
-@Name("SnapshotAvro")
-@Description("Sink for a SnapshotFileSet that writes data in Avro format.")
+@Plugin(type =  BatchSink.PLUGIN_TYPE)
+@Name("MultipleSnapshotFilesetSink")
+@Description("Sink for a  Multiple SnapshotFileSets that writes data in Avro format.")
 public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink<AvroKey<GenericRecord>, NullWritable> {
   private StructuredToAvroTransformer recordTransformer;
   private final MultipleSnapshotFilesetSinkConfig config;
@@ -136,7 +137,8 @@ public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink
 
     @Override
     public String getOutputFormatClassName() {
-      return MultipleSnapshotFilesetSinkOutputFormat.class.getName();
+//      return MultipleSnapshotFilesetSinkOutputFormat.class.getName();
+      return null;
     }
 
     @Override
