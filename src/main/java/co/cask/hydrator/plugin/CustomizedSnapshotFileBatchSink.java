@@ -52,7 +52,7 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final SnapshotFileSetBatchSinkConfig config;
-  private SnapshotFileSet snapshotFileSet;
+  private CustomizedSnapshotFileSet snapshotFileSet;
 
   public CustomizedSnapshotFileBatchSink(SnapshotFileSetBatchSinkConfig config) {
     this.config = config;
@@ -79,7 +79,7 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
     }
 
     PartitionedFileSet files = context.getDataset(config.getName());
-    snapshotFileSet = new SnapshotFileSet(files);
+    snapshotFileSet = new CustomizedSnapshotFileSet(files);
 
     Map<String, String> arguments = new HashMap<>();
 
