@@ -7,6 +7,7 @@ public class MultipleFileSets {
 
   private String name;
   private String type;
+  private List<OutputFileSet> outputFileSets;
 
   public String getType() {
     return type;
@@ -15,8 +16,6 @@ public class MultipleFileSets {
   public void setType(String type) {
     this.type = type;
   }
-
-  private List<OutputFileSet> outputFileSets;
 
   public String getName() {
     return name;

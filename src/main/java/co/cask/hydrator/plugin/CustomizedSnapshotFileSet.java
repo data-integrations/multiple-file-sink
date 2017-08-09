@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.hydrator.plugin.common.*;
 import co.cask.hydrator.plugin.model.MultipleFileSets;
+import co.cask.hydrator.plugin.model.OutputFileSet;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
@@ -63,24 +64,42 @@ public class CustomizedSnapshotFileSet {
     this.files = files;
   }
 
-  public static PartitionedFileSetProperties.Builder getBaseProperties(co.cask.hydrator.plugin.common.SnapshotFileSetConfig config) {
-    PartitionedFileSetProperties.Builder propertiesBuilder = PartitionedFileSetProperties.builder()
-      .setPartitioning(Partitioning.builder().addLongField(SNAPSHOT_FIELD).build());
-
-    if (!Strings.isNullOrEmpty(config.getBasePath())) {
-      propertiesBuilder.setBasePath(config.getBasePath());
-    }
-
-    try {
+//  public static PartitionedFileSetProperties.Builder getBaseProperties(co.cask.hydrator.plugin.common.SnapshotFileSetConfig config) {
+//    PartitionedFileSetProperties.Builder propertiesBuilder = PartitionedFileSetProperties.builder()
+//      .setPartitioning(Partitioning.builder().addLongField(SNAPSHOT_FIELD).build());
+//
+//    if (!Strings.isNullOrEmpty(config.getBasePath())) {
+//      propertiesBuilder.setBasePath(config.getBasePath());
+//    }
+//
+//    try {
+//
 //      Map<String, String> properties = GSON.fromJson(config.getFileProperties(), MAP_TYPE);
 //      if (properties != null) {
 //        propertiesBuilder.addAll(properties);
 //      }
+//
+//    } catch (Exception e) {
+//      throw new IllegalArgumentException("Could not decode the 'properties' setting. Please check that it " +
+//                                           "is a JSON Object of string to string. Failed with error: " + e.getMessage(), e);
+//    }
+//
+//    return propertiesBuilder;
+//  }
 
-      Gson gson = new GsonBuilder().setPrettyPrinting().create();
-      MultipleFileSets multipleFileSets= gson.fromJson(config.getFileProperties(), MultipleFileSets.class);
-      System.out.println(multipleFileSets.toString());
+  public static PartitionedFileSetProperties.Builder getBaseProperties(OutputFileSet outputFileSet) {
+    PartitionedFileSetProperties.Builder propertiesBuilder = PartitionedFileSetProperties.builder()
+      .setPartitioning(Partitioning.builder().addLongField(SNAPSHOT_FIELD).build());
 
+    if (!Strings.isNullOrEmpty(outputFileSet.getDatasetTargetPaths())) {
+      propertiesBuilder.setBasePath(outputFileSet.getDatasetTargetPaths());
+    }
+
+    try {
+      Map<String, String> properties = GSON.fromJson(outputFileSet.getFilesetProperties(), MAP_TYPE);
+      if (properties != null) {
+        propertiesBuilder.addAll(properties);
+      }
 
     } catch (Exception e) {
       throw new IllegalArgumentException("Could not decode the 'properties' setting. Please check that it " +
@@ -123,8 +142,9 @@ public class CustomizedSnapshotFileSet {
 
   public Map<String, String> getOutputArguments(long snapshotTime, Map<String, String> otherProperties) {
     Map<String, String> args = new HashMap<>();
-    args.putAll(otherProperties);
-
+    if (otherProperties != null) {
+      args.putAll(otherProperties);
+    }
     PartitionKey outputKey = PartitionKey.builder().addLongField(SNAPSHOT_FIELD, snapshotTime).build();
     PartitionedFileSetArguments.setOutputPartitionKey(args, outputKey);
     return args;

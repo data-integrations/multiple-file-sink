@@ -20,13 +20,14 @@ import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.hydrator.plugin.CustomizedSnapshotFileBatchSink;
+import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.hydrator.plugin.common.FileSetUtil;
 import co.cask.hydrator.plugin.common.StructuredToAvroTransformer;
 import org.apache.avro.Schema;
@@ -45,6 +46,8 @@ import java.util.Map;
 import java.util.HashMap;
 
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link CustomizedSnapshotFileBatchSink} that stores data in Avro format.
@@ -55,6 +58,7 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink<AvroKey<GenericRecord>, NullWritable> {
   private StructuredToAvroTransformer recordTransformer;
   private final MultipleSnapshotFilesetSinkConfig config;
+  private static final Logger LOG = LoggerFactory.getLogger(MultipleSnapshotFilesetSink.class);
 
   public MultipleSnapshotFilesetSink(MultipleSnapshotFilesetSinkConfig config) {
     super(config);
@@ -83,6 +87,8 @@ public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink
     }
     propertiesBuilder.addAll(FileSetUtil.getAvroCompressionConfiguration(config.compressionCodec, config.schema,
                                                                          true));
+//    LOG.info("MultipleSnapshotFilesetSink.addFileProperties:");
+//    LOG.info("MultipleSnapshotFilesetSink.addFileProperties:"+config.schema);
     propertiesBuilder
       .setInputFormat(AvroKeyInputFormat.class)
       .setOutputFormat(AvroKeyOutputFormat.class)
@@ -94,10 +100,15 @@ public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink
       .add(DatasetProperties.SCHEMA, config.schema);
   }
 
+//  @Override
+//  public void prepareRun(BatchSinkContext context) throws DatasetManagementException{
+//
+//  }
+
   /**
    * Config for SnapshotFileBatchAvroSink
    */
-  public static class MultipleSnapshotFilesetSinkConfig extends SnapshotFileSetBatchSinkConfig {
+  public static class MultipleSnapshotFilesetSinkConfig extends CustomizedSnapshotFileSetBatchSinkConfig {
     @Description("The Avro schema of the record being written to the Sink as a JSON Object.")
     @Macro
     private String schema;
@@ -106,9 +117,8 @@ public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink
     @Description("Used to specify the compression codec to be used for the final dataset.")
     private String compressionCodec;
 
-    public MultipleSnapshotFilesetSinkConfig(String name, @Nullable String basePath, String schema,
-                              @Nullable String compressionCodec) {
-      super(name, basePath, null);
+    public MultipleSnapshotFilesetSinkConfig(String schema, @Nullable String compressionCodec) {
+      super(null);
       this.schema = schema;
       this.compressionCodec = compressionCodec;
     }

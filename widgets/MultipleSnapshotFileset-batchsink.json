@@ -7,22 +7,6 @@
       "label": "Multiple Snapshot Fileset Sink",
       "properties": [
         {
-          "widget-type": "dataset-selector",
-          "label": "Dataset Name",
-          "name": "name"
-        },
-        {
-          "widget-type": "textbox",
-          "label": "Dataset Base Path",
-          "name": "basePath",
-          "placeholder": "E.g. /tmp/folder/"
-        },
-        {
-          "widget-type": "csv",
-          "label": "Partition Field Names",
-          "name": "fieldNames"
-        },
-        {
           "widget-type": "select",
           "label": "Compression Codec",
           "name": "compressionCodec",
@@ -34,6 +18,10 @@
             ],
             "default": "None"
           }
+        },
+        {
+          "widget-type":"json-editor",
+          "name":"fileProperties"
         }
       ]
     }

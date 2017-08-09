@@ -29,7 +29,10 @@ import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.hydrator.common.TimeParser;
 import co.cask.hydrator.plugin.common.SnapshotFileSetConfig;
 import co.cask.hydrator.plugin.dataset.SnapshotFileSet;
+import co.cask.hydrator.plugin.model.MultipleFileSets;
+import co.cask.hydrator.plugin.model.OutputFileSet;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -51,43 +55,69 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  private final SnapshotFileSetBatchSinkConfig config;
-  private CustomizedSnapshotFileSet snapshotFileSet;
+  private final CustomizedSnapshotFileSetBatchSinkConfig config;
+  private CustomizedSnapshotFileSet customizedSnapshotFileSet;
 
-  public CustomizedSnapshotFileBatchSink(SnapshotFileSetBatchSinkConfig config) {
+  public CustomizedSnapshotFileBatchSink(CustomizedSnapshotFileSetBatchSinkConfig config) {
     this.config = config;
   }
 
-  @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    config.validate();
-    if (!config.containsMacro("name") && !config.containsMacro("basePath") && !config.containsMacro("fileProperties")) {
-      FileSetProperties.Builder fileProperties = SnapshotFileSet.getBaseProperties(config);
-      addFileProperties(fileProperties);
-      pipelineConfigurer.createDataset(config.getName(), PartitionedFileSet.class, fileProperties.build());
-    }
-  }
+//  @Override
+//  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+//    config.validate();
+//    if (!config.containsMacro("name") && !config.containsMacro("basePath") && !config.containsMacro("fileProperties")) {
+//      FileSetProperties.Builder fileProperties = SnapshotFileSet.getBaseProperties(config);
+//      addFileProperties(fileProperties);
+//      pipelineConfigurer.createDataset(config.getName(), PartitionedFileSet.class, fileProperties.build());
+//    }
+//  }
 
   @Override
   public void prepareRun(BatchSinkContext context) throws DatasetManagementException {
+
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    MultipleFileSets multipleFileSets= gson.fromJson(config.getFileProperties(), MultipleFileSets.class);
+    System.out.println(multipleFileSets.toString());
+
     // if macros were provided, the dataset still needs to be created
     config.validate();
-    if (!context.datasetExists(config.getName())) {
-      FileSetProperties.Builder fileProperties = SnapshotFileSet.getBaseProperties(config);
-      addFileProperties(fileProperties);
-      context.createDataset(config.getName(), PartitionedFileSet.class.getName(), fileProperties.build());
+    for(OutputFileSet outputFileSet : multipleFileSets.getOutputFileSets()){
+      if (!context.datasetExists(outputFileSet.getDatasetName())) {
+        //FileSetProperties.Builder fileProperties = CustomizedSnapshotFileSet.getBaseProperties(config);
+        FileSetProperties.Builder fileProperties = CustomizedSnapshotFileSet.getBaseProperties(outputFileSet);
+        addFileProperties(fileProperties);
+        context.createDataset(outputFileSet.getDatasetName(),
+                              PartitionedFileSet.class.getName(), fileProperties.build());
+      }
+      PartitionedFileSet files = context.getDataset(outputFileSet.getDatasetName());
+      customizedSnapshotFileSet = new CustomizedSnapshotFileSet(files);
+
+      Map<String, String> arguments = new HashMap<>();
+
+      if (outputFileSet.getFilesetProperties() != null) {
+        arguments = GSON.fromJson(outputFileSet.getFilesetProperties(), MAP_TYPE);
+      }
+      context.addOutput(Output.ofDataset(outputFileSet.getDatasetName(), customizedSnapshotFileSet.
+        getOutputArguments(context.getLogicalStartTime(), arguments)));
     }
 
-    PartitionedFileSet files = context.getDataset(config.getName());
-    snapshotFileSet = new CustomizedSnapshotFileSet(files);
-
-    Map<String, String> arguments = new HashMap<>();
-
-    if (config.getFileProperties() != null) {
-      arguments = GSON.fromJson(config.getFileProperties(), MAP_TYPE);
-    }
-    context.addOutput(Output.ofDataset(config.getName(),
-                                       snapshotFileSet.getOutputArguments(context.getLogicalStartTime(), arguments)));
+//    if (!context.datasetExists(config.getName())) {
+//      FileSetProperties.Builder fileProperties = SnapshotFileSet.getBaseProperties(config);
+//      addFileProperties(fileProperties);
+//      context.createDataset(config.getName(), PartitionedFileSet.class.getName(), fileProperties.build());
+//    }
+//
+//    PartitionedFileSet files = context.getDataset(config.getName());
+//    snapshotFileSet = new CustomizedSnapshotFileSet(files);
+//
+//    Map<String, String> arguments = new HashMap<>();
+//
+//    if (config.getFileProperties() != null) {
+//      arguments = GSON.fromJson(config.getFileProperties(), MAP_TYPE);
+//    }
+//    context.addOutput(Output.ofDataset(config.getName(),
+//                                       snapshotFileSet.getOutputArguments(context.getLogicalStartTime(), arguments)));
+      config.getFileProperties();
   }
 
   @Override
@@ -95,7 +125,7 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
     super.onRunFinish(succeeded, context);
     if (succeeded) {
       try {
-        snapshotFileSet.onSuccess(context.getLogicalStartTime());
+        customizedSnapshotFileSet.onSuccess(context.getLogicalStartTime());
       } catch (Exception e) {
         LOG.error("Exception updating state file with value of latest snapshot, ", e);
       }
@@ -104,7 +134,7 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
         if (config.getCleanPartitionsOlderThan() != null) {
           long cutoffTime =
             context.getLogicalStartTime() - TimeParser.parseDuration(config.getCleanPartitionsOlderThan());
-          snapshotFileSet.deleteMatchingPartitionsByTime(cutoffTime);
+          customizedSnapshotFileSet.deleteMatchingPartitionsByTime(cutoffTime);
           LOG.info("Cleaning up snapshots older than {}", config.getCleanPartitionsOlderThan());
         }
       } catch (IOException e) {
@@ -121,7 +151,7 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
   /**
    * Config for CustomizedSnapshotFileBatchSink
    */
-  public static class SnapshotFileSetBatchSinkConfig extends SnapshotFileSetConfig {
+  public static class CustomizedSnapshotFileSetBatchSinkConfig extends CustomizedSnapshotFileSetConfig {
     @Description("Optional property that configures the sink to delete old partitions after successful runs. " +
       "If set, when a run successfully finishes, the sink will subtract this amount of time from the runtime and " +
       "delete any partitions older than that time. " +
@@ -133,13 +163,13 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
     @Macro
     protected String cleanPartitionsOlderThan;
 
-    public SnapshotFileSetBatchSinkConfig() {
+    public CustomizedSnapshotFileSetBatchSinkConfig() {
 
     }
 
-    public SnapshotFileSetBatchSinkConfig(String name, @Nullable String basePath,
+    public CustomizedSnapshotFileSetBatchSinkConfig(
                                           @Nullable String cleanPartitionsOlderThan) {
-      super(name, basePath, null);
+//      super(null);
       this.cleanPartitionsOlderThan = cleanPartitionsOlderThan;
     }
 
