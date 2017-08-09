@@ -1,0 +1,96 @@
+
+{
+  "name": "Multiple File Set Sink",
+  "outputFileSets": [
+    {
+      "compressionCodec": "Snappy",
+      "datasetName": "fileset0",
+      "datasetTargetPaths": "",
+      "expression": "(id.startsWith(\"201\") || id.startsWith(\"202\") || id.startsWith(\"203\") )&& salary >= 5000 && salary <= 7000",
+      "filesetProperties": "",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "string"
+          },
+          {
+            "name": "first name",
+            "type": "string"
+          },
+          {
+            "name": "last name",
+            "type": "string"
+          },
+          {
+            "name": "sex",
+            "type": "string"
+          },
+          {
+            "name": "address",
+            "type": "string"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          }
+        ]
+      }
+    },
+    {
+      "compressionCodec": "Snappy",
+      "datasetName": "fileset1",
+      "datasetTargetPaths": "",
+      "expression": " id.startsWith(\"202\") && salary >= 5000 && salary <= 7000",
+      "filesetProperties": "",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "string"
+          },
+          {
+            "name": "first name",
+            "type": "string"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          }
+        ]
+      }
+    },
+    {
+      "compressionCodec": "Snappy",
+      "datasetName": "fileset2",
+      "datasetTargetPaths": "",
+      "expression": "(id.startsWith(\"202\") || id.startsWith(\"203\")) && salary >= 5000 && salary < 9000",
+      "filesetProperties": "",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "string"
+          },
+          {
+            "name": "first name",
+            "type": "string"
+          },
+          {
+            "name": "sex",
+            "type": "string"
+          },
+          {
+            "name": "address",
+            "type": "string"
+          },
+          {
+            "name": "salary",
+            "type": "int"
+          }
+        ]
+      }
+    }
+  ],
+  "type": "batchsink"
+}

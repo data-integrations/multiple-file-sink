@@ -23,10 +23,12 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.hydrator.plugin.common.*;
+import co.cask.hydrator.plugin.model.MultipleFileSets;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
 
@@ -34,6 +36,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -68,10 +72,16 @@ public class CustomizedSnapshotFileSet {
     }
 
     try {
-      Map<String, String> properties = GSON.fromJson(config.getFileProperties(), MAP_TYPE);
-      if (properties != null) {
-        propertiesBuilder.addAll(properties);
-      }
+//      Map<String, String> properties = GSON.fromJson(config.getFileProperties(), MAP_TYPE);
+//      if (properties != null) {
+//        propertiesBuilder.addAll(properties);
+//      }
+
+      Gson gson = new GsonBuilder().setPrettyPrinting().create();
+      MultipleFileSets multipleFileSets= gson.fromJson(config.getFileProperties(), MultipleFileSets.class);
+      System.out.println(multipleFileSets.toString());
+
+
     } catch (Exception e) {
       throw new IllegalArgumentException("Could not decode the 'properties' setting. Please check that it " +
                                            "is a JSON Object of string to string. Failed with error: " + e.getMessage(), e);
