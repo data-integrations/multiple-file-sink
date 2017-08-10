@@ -1,0 +1,14 @@
+{
+	"type": "record",
+	"name": "sales",
+	"fields": [{
+		"name": "product",
+		"type": "string"
+	}, {
+		"name": "buyer",
+		"type": "string"
+	}, {
+		"name": "price",
+		"type": "double"
+	}]
+}

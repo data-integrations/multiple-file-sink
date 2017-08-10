@@ -49,10 +49,12 @@ public class OutputFileSet {
   }
 
   public Schema getSchema() {
-    return schema;
+
+    return this.schema;
+
   }
 
-  public void setSchema(Schema schema) {
+  public void setSchema(Schema schema) throws Exception{
     this.schema = schema;
   }
   @Override

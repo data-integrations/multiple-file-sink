@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -54,6 +55,8 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
   private static final Logger LOG = LoggerFactory.getLogger(CustomizedSnapshotFileBatchSink.class);
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static Gson gson;
+  private List<Schema> schemaList;
 
   private final CustomizedSnapshotFileSetBatchSinkConfig config;
   private CustomizedSnapshotFileSet customizedSnapshotFileSet;
@@ -62,30 +65,26 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
     this.config = config;
   }
 
-//  @Override
-//  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-//    config.validate();
-//    if (!config.containsMacro("name") && !config.containsMacro("basePath") && !config.containsMacro("fileProperties")) {
-//      FileSetProperties.Builder fileProperties = SnapshotFileSet.getBaseProperties(config);
-//      addFileProperties(fileProperties);
-//      pipelineConfigurer.createDataset(config.getName(), PartitionedFileSet.class, fileProperties.build());
-//    }
-//  }
+  @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    super.configurePipeline(pipelineConfigurer);
+    Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
+  }
 
   @Override
-  public void prepareRun(BatchSinkContext context) throws DatasetManagementException {
+  public void prepareRun(BatchSinkContext context) throws DatasetManagementException, IOException {
 
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    gson = new GsonBuilder().setPrettyPrinting().create();
     MultipleFileSets multipleFileSets= gson.fromJson(config.getFileProperties(), MultipleFileSets.class);
-    System.out.println(multipleFileSets.toString());
 
     // if macros were provided, the dataset still needs to be created
-    config.validate();
+    //config.validate();
     for(OutputFileSet outputFileSet : multipleFileSets.getOutputFileSets()){
       if (!context.datasetExists(outputFileSet.getDatasetName())) {
         //FileSetProperties.Builder fileProperties = CustomizedSnapshotFileSet.getBaseProperties(config);
         FileSetProperties.Builder fileProperties = CustomizedSnapshotFileSet.getBaseProperties(outputFileSet);
-        addFileProperties(fileProperties);
+        addFileProperties(fileProperties, Schema.parseJson(outputFileSet.getSchema().toString()).toString());
+        schemaList.add(Schema.parseJson(outputFileSet.getSchema().toString()));
         context.createDataset(outputFileSet.getDatasetName(),
                               PartitionedFileSet.class.getName(), fileProperties.build());
       }
@@ -101,86 +100,49 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
         getOutputArguments(context.getLogicalStartTime(), arguments)));
     }
 
-//    if (!context.datasetExists(config.getName())) {
-//      FileSetProperties.Builder fileProperties = SnapshotFileSet.getBaseProperties(config);
-//      addFileProperties(fileProperties);
-//      context.createDataset(config.getName(), PartitionedFileSet.class.getName(), fileProperties.build());
-//    }
-//
-//    PartitionedFileSet files = context.getDataset(config.getName());
-//    snapshotFileSet = new CustomizedSnapshotFileSet(files);
-//
-//    Map<String, String> arguments = new HashMap<>();
-//
-//    if (config.getFileProperties() != null) {
-//      arguments = GSON.fromJson(config.getFileProperties(), MAP_TYPE);
-//    }
-//    context.addOutput(Output.ofDataset(config.getName(),
-//                                       snapshotFileSet.getOutputArguments(context.getLogicalStartTime(), arguments)));
-      config.getFileProperties();
-  }
-
-  @Override
-  public void onRunFinish(boolean succeeded, BatchSinkContext context) {
-    super.onRunFinish(succeeded, context);
-    if (succeeded) {
-      try {
-        customizedSnapshotFileSet.onSuccess(context.getLogicalStartTime());
-      } catch (Exception e) {
-        LOG.error("Exception updating state file with value of latest snapshot, ", e);
-      }
-
-      try {
-        if (config.getCleanPartitionsOlderThan() != null) {
-          long cutoffTime =
-            context.getLogicalStartTime() - TimeParser.parseDuration(config.getCleanPartitionsOlderThan());
-          customizedSnapshotFileSet.deleteMatchingPartitionsByTime(cutoffTime);
-          LOG.info("Cleaning up snapshots older than {}", config.getCleanPartitionsOlderThan());
-        }
-      } catch (IOException e) {
-        LOG.error("Exception occurred while cleaning up older snapshots", e);
-      }
-    }
+    config.getFileProperties();
   }
 
   /**
    * add all fileset properties specific to the type of sink, such as schema and output format.
    */
-  protected abstract void addFileProperties(FileSetProperties.Builder propertiesBuilder);
+  protected abstract void addFileProperties(FileSetProperties.Builder propertiesBuilder, String schema);
 
   /**
    * Config for CustomizedSnapshotFileBatchSink
    */
   public static class CustomizedSnapshotFileSetBatchSinkConfig extends CustomizedSnapshotFileSetConfig {
-    @Description("Optional property that configures the sink to delete old partitions after successful runs. " +
-      "If set, when a run successfully finishes, the sink will subtract this amount of time from the runtime and " +
-      "delete any partitions older than that time. " +
-      "The format is expected to be a number followed by an 's', 'm', 'h', or 'd' specifying the time unit, with 's' " +
-      "for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. For example, if the pipeline is scheduled to " +
-      "run at midnight of January 1, 2016, and this property is set to 7d, the sink will delete any partitions " +
-      "for time partitions older than midnight Dec 25, 2015.")
-    @Nullable
-    @Macro
-    protected String cleanPartitionsOlderThan;
+//    @Description("Optional property that configures the sink to delete old partitions after successful runs. " +
+//      "If set, when a run successfully finishes, the sink will subtract this amount of time from the runtime and " +
+//      "delete any partitions older than that time. " +
+//      "The format is expected to be a number followed by an 's', 'm', 'h', or 'd' specifying the time unit, with 's' " +
+//      "for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. For example, if the pipeline is scheduled to " +
+//      "run at midnight of January 1, 2016, and this property is set to 7d, the sink will delete any partitions " +
+//      "for time partitions older than midnight Dec 25, 2015.")
+//    @Nullable
+//    @Macro
+//    protected String cleanPartitionsOlderThan;
+//
+//    public CustomizedSnapshotFileSetBatchSinkConfig() {
+//
+//    }
+//
+//    public CustomizedSnapshotFileSetBatchSinkConfig(
+//                                          @Nullable String cleanPartitionsOlderThan) {
+////      super(null);
+//      this.cleanPartitionsOlderThan = cleanPartitionsOlderThan;
+//    }
+//
+//    public String getCleanPartitionsOlderThan() {
+//      return cleanPartitionsOlderThan;
+//    }
+//
+//    public void validate() {
+//      if (cleanPartitionsOlderThan != null) {
+//        TimeParser.parseDuration(cleanPartitionsOlderThan);
+//      }
+//    }
 
-    public CustomizedSnapshotFileSetBatchSinkConfig() {
 
-    }
-
-    public CustomizedSnapshotFileSetBatchSinkConfig(
-                                          @Nullable String cleanPartitionsOlderThan) {
-//      super(null);
-      this.cleanPartitionsOlderThan = cleanPartitionsOlderThan;
-    }
-
-    public String getCleanPartitionsOlderThan() {
-      return cleanPartitionsOlderThan;
-    }
-
-    public void validate() {
-      if (cleanPartitionsOlderThan != null) {
-        TimeParser.parseDuration(cleanPartitionsOlderThan);
-      }
-    }
   }
 }

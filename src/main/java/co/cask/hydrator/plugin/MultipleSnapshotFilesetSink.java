@@ -30,6 +30,10 @@ import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.hydrator.plugin.common.FileSetUtil;
 import co.cask.hydrator.plugin.common.StructuredToAvroTransformer;
+import co.cask.hydrator.plugin.model.MultipleFileSets;
+import co.cask.hydrator.plugin.model.OutputFileSet;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaParseException;
 import org.apache.avro.generic.GenericRecord;
@@ -42,6 +46,7 @@ import org.apache.hadoop.io.NullWritable;
 import java.io.IOException;
 import javax.annotation.Nullable;
 
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -78,14 +83,14 @@ public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink
   }
 
   @Override
-  protected void addFileProperties(FileSetProperties.Builder propertiesBuilder) {
+  protected void addFileProperties(FileSetProperties.Builder propertiesBuilder, String schema) {
     // parse it to make sure its valid
     try {
-      new Schema.Parser().parse(config.schema);
+      new Schema.Parser().parse(schema);
     } catch (SchemaParseException e) {
       throw new IllegalArgumentException("Could not parse schema: " + e.getMessage(), e);
     }
-    propertiesBuilder.addAll(FileSetUtil.getAvroCompressionConfiguration(config.compressionCodec, config.schema,
+    propertiesBuilder.addAll(FileSetUtil.getAvroCompressionConfiguration(config.compressionCodec, schema,
                                                                          true));
 //    LOG.info("MultipleSnapshotFilesetSink.addFileProperties:");
 //    LOG.info("MultipleSnapshotFilesetSink.addFileProperties:"+config.schema);
@@ -96,14 +101,9 @@ public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", config.schema)
-      .add(DatasetProperties.SCHEMA, config.schema);
+      .setTableProperty("avro.schema.literal", schema)
+      .add(DatasetProperties.SCHEMA, schema);
   }
-
-//  @Override
-//  public void prepareRun(BatchSinkContext context) throws DatasetManagementException{
-//
-//  }
 
   /**
    * Config for SnapshotFileBatchAvroSink
@@ -118,42 +118,42 @@ public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink
     private String compressionCodec;
 
     public MultipleSnapshotFilesetSinkConfig(String schema, @Nullable String compressionCodec) {
-      super(null);
-      this.schema = schema;
+      //super(null);
+//      this.schema = schema;
       this.compressionCodec = compressionCodec;
     }
 
-    @Override
-    public void validate() {
-      super.validate();
-      try {
-        if (schema != null) {
-          co.cask.cdap.api.data.schema.Schema.parseJson(schema);
-        }
-      } catch (IOException e) {
-        throw new IllegalArgumentException("Unable to parse schema: " + e.getMessage());
-      }
-    }
+//    @Override
+//    public void validate() {
+//      super.validate();
+//      try {
+//        if (schema != null) {
+//          co.cask.cdap.api.data.schema.Schema.parseJson(schema);
+//        }
+//      } catch (IOException e) {
+//        throw new IllegalArgumentException("Unable to parse schema: " + e.getMessage());
+//      }
+//    }
   }
 
-   private class MultipleSnapshotFilesetSinkOutputFormatProvider implements OutputFormatProvider {
-
-    private final Map<String, String> conf;
-
-     MultipleSnapshotFilesetSinkOutputFormatProvider(MultipleSnapshotFilesetSinkConfig config, Configuration configuration) {
-      this.conf = new HashMap<>();
-      conf.put("key", "value");
-    }
-
-    @Override
-    public String getOutputFormatClassName() {
-//      return MultipleSnapshotFilesetSinkOutputFormat.class.getName();
-      return null;
-    }
-
-    @Override
-    public Map<String, String> getOutputFormatConfiguration() {
-      return conf;
-    }
-  }
+//   private class MultipleSnapshotFilesetSinkOutputFormatProvider implements OutputFormatProvider {
+//
+//    private final Map<String, String> conf;
+//
+//     MultipleSnapshotFilesetSinkOutputFormatProvider(MultipleSnapshotFilesetSinkConfig config, Configuration configuration) {
+//      this.conf = new HashMap<>();
+//      conf.put("key", "value");
+//    }
+//
+//    @Override
+//    public String getOutputFormatClassName() {
+////      return MultipleSnapshotFilesetSinkOutputFormat.class.getName();
+//      return null;
+//    }
+//
+//    @Override
+//    public Map<String, String> getOutputFormatConfiguration() {
+//      return conf;
+//    }
+//  }
 }
