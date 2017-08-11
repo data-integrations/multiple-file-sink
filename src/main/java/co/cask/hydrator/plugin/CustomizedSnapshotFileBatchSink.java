@@ -16,10 +16,6 @@
 
 package co.cask.hydrator.plugin;
 
-import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Macro;
-import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetManagementException;
@@ -28,24 +24,17 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
-import co.cask.hydrator.common.TimeParser;
-import co.cask.hydrator.common.batch.JobUtils;
-import co.cask.hydrator.plugin.common.SnapshotFileSetConfig;
-import co.cask.hydrator.plugin.dataset.SnapshotFileSet;
 import co.cask.hydrator.plugin.model.MultipleFileSets;
 import co.cask.hydrator.plugin.model.OutputFileSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -60,7 +49,6 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static Gson gson;
-//  private List<Schema> schemaList;
 
   private final CustomizedSnapshotFileSetBatchSinkConfig config;
   private CustomizedSnapshotFileSet customizedSnapshotFileSet;
@@ -83,7 +71,7 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
 
     // if macros were provided, the dataset still needs to be created
     //config.validate();
-    for(OutputFileSet outputFileSet : multipleFileSets.getOutputFileSets()){
+    for(OutputFileSet outputFileSet : multipleFileSets.getOutputFileSets()) {
       if (!context.datasetExists(outputFileSet.getDatasetName())) {
         //FileSetProperties.Builder fileProperties = CustomizedSnapshotFileSet.getBaseProperties(config);
         FileSetProperties.Builder fileProperties = CustomizedSnapshotFileSet.getBaseProperties(outputFileSet);
@@ -94,37 +82,8 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
         context.createDataset(outputFileSet.getDatasetName(),
                               PartitionedFileSet.class.getName(), fileProperties.build());
       }
-      PartitionedFileSet files = context.getDataset(outputFileSet.getDatasetName());
-      customizedSnapshotFileSet = new CustomizedSnapshotFileSet(files);
 
-      Map<String, String> arguments = new HashMap<>();
-
-      if (outputFileSet.getFilesetProperties() != null) {
-        arguments = GSON.fromJson(outputFileSet.getFilesetProperties(), MAP_TYPE);
-      }
-
-//      context.addOutput(Output.ofDataset(outputFileSet.getDatasetName(), customizedSnapshotFileSet.
-//        getOutputArguments(context.getLogicalStartTime(), arguments)));
-
-
-      Job job;
-      ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-      // Switch the context classloader to plugin class' classloader (PluginClassLoader) so that
-      // when Job/Configuration is created, it uses PluginClassLoader to load resources (hbase-default.xml)
-      // which is present in the plugin jar and is not visible in the CombineClassLoader (which is what oldClassLoader
-      // points to).
-      Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-      try {
-        job = JobUtils.createInstance();
-      } finally {
-        // Switch back to the original
-        Thread.currentThread().setContextClassLoader(oldClassLoader);
-      }
-      Configuration conf = job.getConfiguration();
-      context.addOutput(Output.ofDataset(outputFileSet.getDatasetName(), new MultipleSnapshotFilesetSink.MultipleSnapshotFilesetSinkOutputFormatProvider (config, conf)));
     }
-
-    config.getFileProperties();
   }
 
   /**

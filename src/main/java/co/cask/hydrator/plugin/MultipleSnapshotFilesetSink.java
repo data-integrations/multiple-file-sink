@@ -19,6 +19,7 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.DatasetManagementException;
@@ -29,16 +30,22 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
-import co.cask.hydrator.common.batch.sink.SinkOutputFormatProvider;
+import co.cask.hydrator.common.batch.JobUtils;
 import co.cask.hydrator.plugin.common.FileSetUtil;
 import co.cask.hydrator.plugin.common.StructuredToAvroTransformer;
+import co.cask.hydrator.plugin.model.MultipleFileSets;
+import co.cask.hydrator.plugin.model.OutputFileSet;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaParseException;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapreduce.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +53,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
-import org.apache.hadoop.conf.Configuration;
 
 @Plugin(type =  BatchSink.PLUGIN_TYPE)
 @Name("MultipleSnapshotFileset")
@@ -55,6 +61,7 @@ public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink
   private StructuredToAvroTransformer recordTransformer;
   private final MultipleSnapshotFilesetSinkConfig config;
   private static final Logger LOG = LoggerFactory.getLogger(MultipleSnapshotFilesetSink.class);
+  private static Gson gson;
 
   public MultipleSnapshotFilesetSink(MultipleSnapshotFilesetSinkConfig config) {
     super(config);
@@ -65,6 +72,37 @@ public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     recordTransformer = new StructuredToAvroTransformer(config.schema);
+  }
+
+
+  @Override
+  public void prepareRun(BatchSinkContext context) throws DatasetManagementException, IOException {
+    super.prepareRun(context);
+    Job job;
+    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    // Switch the context classloader to plugin class' classloader (PluginClassLoader) so that
+    // when Job/Configuration is created, it uses PluginClassLoader to load resources (hbase-default.xml)
+    // which is present in the plugin jar and is not visible in the CombineClassLoader (which is what oldClassLoader
+    // points to).
+    Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+    try {
+      job = JobUtils.createInstance();
+    } finally {
+      // Switch back to the original
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+    }
+    Configuration confJob = job.getConfiguration();
+
+    gson = new GsonBuilder().setPrettyPrinting().create();
+    MultipleFileSets multipleFileSets= gson.fromJson(config.getFileProperties(), MultipleFileSets.class);
+
+    // if macros were provided, the dataset still needs to be created
+    //config.validate();
+    for(OutputFileSet outputFileSet : multipleFileSets.getOutputFileSets()) {
+      context.addOutput(Output.of(
+        outputFileSet.getDatasetName(),
+        new MultipleSnapshotFilesetSinkOutputFormatProvider(config, confJob)));
+    }
   }
 
 
@@ -97,7 +135,7 @@ public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink
   /**
    * Config for SnapshotFileBatchAvroSink
    */
-  public static class MultipleSnapshotFilesetSinkConfig extends CustomizedSnapshotFileSetBatchSinkConfig {
+  public class MultipleSnapshotFilesetSinkConfig extends CustomizedSnapshotFileSetBatchSinkConfig {
      @Description("The Avro schema of the record being written to the Sink as a JSON Object.")
      @Macro
      private String schema;
@@ -112,11 +150,12 @@ public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink
   }
 
 
-  private class MultipleSnapshotFilesetSinkOutputFormatProvider implements OutputFormatProvider {
+  class MultipleSnapshotFilesetSinkOutputFormatProvider implements OutputFormatProvider {
 
     private final Map<String, String> conf;
 
-    MultipleSnapshotFilesetSinkOutputFormatProvider(MultipleSnapshotFilesetSinkConfig config, Configuration configuration) {
+    MultipleSnapshotFilesetSinkOutputFormatProvider(MultipleSnapshotFilesetSinkConfig config,
+                                                    Configuration configuration) {
       this.conf = new HashMap<>();
       conf.put("","");
     }
