@@ -64,28 +64,6 @@ public class CustomizedSnapshotFileSet {
     this.files = files;
   }
 
-//  public static PartitionedFileSetProperties.Builder getBaseProperties(co.cask.hydrator.plugin.common.SnapshotFileSetConfig config) {
-//    PartitionedFileSetProperties.Builder propertiesBuilder = PartitionedFileSetProperties.builder()
-//      .setPartitioning(Partitioning.builder().addLongField(SNAPSHOT_FIELD).build());
-//
-//    if (!Strings.isNullOrEmpty(config.getBasePath())) {
-//      propertiesBuilder.setBasePath(config.getBasePath());
-//    }
-//
-//    try {
-//
-//      Map<String, String> properties = GSON.fromJson(config.getFileProperties(), MAP_TYPE);
-//      if (properties != null) {
-//        propertiesBuilder.addAll(properties);
-//      }
-//
-//    } catch (Exception e) {
-//      throw new IllegalArgumentException("Could not decode the 'properties' setting. Please check that it " +
-//                                           "is a JSON Object of string to string. Failed with error: " + e.getMessage(), e);
-//    }
-//
-//    return propertiesBuilder;
-//  }
 
   public static PartitionedFileSetProperties.Builder getBaseProperties(OutputFileSet outputFileSet) {
     PartitionedFileSetProperties.Builder propertiesBuilder = PartitionedFileSetProperties.builder()

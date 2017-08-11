@@ -19,6 +19,7 @@ package co.cask.hydrator.plugin;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.data.batch.Output;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetManagementException;
@@ -28,6 +29,7 @@ import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.hydrator.common.TimeParser;
+import co.cask.hydrator.common.batch.JobUtils;
 import co.cask.hydrator.plugin.common.SnapshotFileSetConfig;
 import co.cask.hydrator.plugin.dataset.SnapshotFileSet;
 import co.cask.hydrator.plugin.model.MultipleFileSets;
@@ -35,15 +37,17 @@ import co.cask.hydrator.plugin.model.OutputFileSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Sink that stores snapshots on HDFS, and keeps track of which snapshot is the latest snapshot.
@@ -56,7 +60,7 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static Gson gson;
-  private List<Schema> schemaList;
+//  private List<Schema> schemaList;
 
   private final CustomizedSnapshotFileSetBatchSinkConfig config;
   private CustomizedSnapshotFileSet customizedSnapshotFileSet;
@@ -83,8 +87,10 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
       if (!context.datasetExists(outputFileSet.getDatasetName())) {
         //FileSetProperties.Builder fileProperties = CustomizedSnapshotFileSet.getBaseProperties(config);
         FileSetProperties.Builder fileProperties = CustomizedSnapshotFileSet.getBaseProperties(outputFileSet);
-        addFileProperties(fileProperties, Schema.parseJson(outputFileSet.getSchema().toString()).toString());
-        schemaList.add(Schema.parseJson(outputFileSet.getSchema().toString()));
+        Schema cdapSchema = Schema.parseJson(outputFileSet.getSchema().toString());
+        addFileProperties(fileProperties, cdapSchema.toString());
+        List<Schema> schemaList = new ArrayList<Schema>();
+        schemaList.add(cdapSchema);
         context.createDataset(outputFileSet.getDatasetName(),
                               PartitionedFileSet.class.getName(), fileProperties.build());
       }
@@ -96,8 +102,26 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
       if (outputFileSet.getFilesetProperties() != null) {
         arguments = GSON.fromJson(outputFileSet.getFilesetProperties(), MAP_TYPE);
       }
-      context.addOutput(Output.ofDataset(outputFileSet.getDatasetName(), customizedSnapshotFileSet.
-        getOutputArguments(context.getLogicalStartTime(), arguments)));
+
+//      context.addOutput(Output.ofDataset(outputFileSet.getDatasetName(), customizedSnapshotFileSet.
+//        getOutputArguments(context.getLogicalStartTime(), arguments)));
+
+
+      Job job;
+      ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+      // Switch the context classloader to plugin class' classloader (PluginClassLoader) so that
+      // when Job/Configuration is created, it uses PluginClassLoader to load resources (hbase-default.xml)
+      // which is present in the plugin jar and is not visible in the CombineClassLoader (which is what oldClassLoader
+      // points to).
+      Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+      try {
+        job = JobUtils.createInstance();
+      } finally {
+        // Switch back to the original
+        Thread.currentThread().setContextClassLoader(oldClassLoader);
+      }
+      Configuration conf = job.getConfiguration();
+      context.addOutput(Output.ofDataset(outputFileSet.getDatasetName(), new MultipleSnapshotFilesetSink.MultipleSnapshotFilesetSinkOutputFormatProvider (config, conf)));
     }
 
     config.getFileProperties();
@@ -112,37 +136,9 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
    * Config for CustomizedSnapshotFileBatchSink
    */
   public static class CustomizedSnapshotFileSetBatchSinkConfig extends CustomizedSnapshotFileSetConfig {
-//    @Description("Optional property that configures the sink to delete old partitions after successful runs. " +
-//      "If set, when a run successfully finishes, the sink will subtract this amount of time from the runtime and " +
-//      "delete any partitions older than that time. " +
-//      "The format is expected to be a number followed by an 's', 'm', 'h', or 'd' specifying the time unit, with 's' " +
-//      "for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. For example, if the pipeline is scheduled to " +
-//      "run at midnight of January 1, 2016, and this property is set to 7d, the sink will delete any partitions " +
-//      "for time partitions older than midnight Dec 25, 2015.")
-//    @Nullable
-//    @Macro
-//    protected String cleanPartitionsOlderThan;
-//
-//    public CustomizedSnapshotFileSetBatchSinkConfig() {
-//
-//    }
-//
-//    public CustomizedSnapshotFileSetBatchSinkConfig(
-//                                          @Nullable String cleanPartitionsOlderThan) {
-////      super(null);
-//      this.cleanPartitionsOlderThan = cleanPartitionsOlderThan;
-//    }
-//
-//    public String getCleanPartitionsOlderThan() {
-//      return cleanPartitionsOlderThan;
-//    }
-//
-//    public void validate() {
-//      if (cleanPartitionsOlderThan != null) {
-//        TimeParser.parseDuration(cleanPartitionsOlderThan);
-//      }
-//    }
 
 
   }
+
+
 }

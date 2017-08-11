@@ -26,8 +26,8 @@ public class Field {
     StringBuilder sb = new StringBuilder();
     sb.append("{\n");
     sb.append("\"name\": \"" + name +"\",\n" );
-    sb.append("\"type\": \"" + type +"\",\n" );
-    sb.append("},\n");
+    sb.append("\"type\": \"" + type +"\"\n" );
+    sb.append("}\n");
     return sb.toString();
   }
 }
