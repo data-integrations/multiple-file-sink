@@ -67,6 +67,7 @@ public class OutputFileSet {
     sb.append("\"expression\":\"" + expression + "\",\n");
     sb.append("\"filesetProperties\":\"" + filesetProperties + "\",\n");
     sb.append("\"schema\":\"" + schema.toString() + ",\n");
+    sb.append("}\n");
     return sb.toString();
   }
 }

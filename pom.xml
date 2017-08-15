@@ -19,7 +19,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>co.cask</groupId>
-  <artifactId>dynamic-partitioner</artifactId>
+  <artifactId>multiple-fileset</artifactId>
     <version>1.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 

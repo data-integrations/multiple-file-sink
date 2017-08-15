@@ -16,11 +16,11 @@
 
 package co.cask.hydrator.plugin;
 
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
@@ -34,8 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -71,17 +70,24 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
 
     // if macros were provided, the dataset still needs to be created
     //config.validate();
+
     for(OutputFileSet outputFileSet : multipleFileSets.getOutputFileSets()) {
       if (!context.datasetExists(outputFileSet.getDatasetName())) {
         //FileSetProperties.Builder fileProperties = CustomizedSnapshotFileSet.getBaseProperties(config);
         FileSetProperties.Builder fileProperties = CustomizedSnapshotFileSet.getBaseProperties(outputFileSet);
         Schema cdapSchema = Schema.parseJson(outputFileSet.getSchema().toString());
-        addFileProperties(fileProperties, cdapSchema.toString());
-        List<Schema> schemaList = new ArrayList<Schema>();
-        schemaList.add(cdapSchema);
-        context.createDataset(outputFileSet.getDatasetName(),
-                              PartitionedFileSet.class.getName(), fileProperties.build());
+        //addFileProperties(fileProperties, cdapSchema.toString());
+        addFileProperties(fileProperties, null);
+        Map<String, String> arguments = new HashMap<>();
+        if (config.getFileProperties() != null) {
+          arguments = GSON.fromJson(config.getFileProperties(), MAP_TYPE);
+        }
+        context.addOutput(Output.ofDataset(
+          outputFileSet.getDatasetName(),
+          customizedSnapshotFileSet.getOutputArguments(context.getLogicalStartTime(), arguments)));
+
       }
+
 
     }
   }

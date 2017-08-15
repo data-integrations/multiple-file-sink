@@ -9,7 +9,7 @@
 			"filesetProperties": "",
 			"schema": {
 				"type": "record",
-				"name": "fileset0",
+				"name": "fileset0schema",
 				"fields": [{
 					"name": "id",
 					"type": "string"
@@ -39,7 +39,7 @@
 			"filesetProperties": "",
 			"schema": {
 				"type": "record",
-				"name": "sales",
+				"name": "fileset1schema",
 				"fields": [{
 					"name": "id",
 					"type": "string"
@@ -60,7 +60,7 @@
 			"filesetProperties": "",
 			"schema": {
 				"type": "record",
-				"name": "sales",
+				"name": "fileset2schema",
 				"fields": [{
 					"name": "id",
 					"type": "string"
