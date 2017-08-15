@@ -19,96 +19,90 @@ id,first_name,last_name,sex,address,salary
 
 6.Parse JSON Input into designed class, following is the fileset properties:
 ```
-
 {
-  "name": "Multiple File Set Sink",
-  "outputFileSets": [
-    {
-      "compressionCodec": "Snappy",
-      "datasetName": "fileset0",
-      "datasetTargetPaths": "",
-      "expression": "(id.startsWith(\"201\") || id.startsWith(\"202\") || id.startsWith(\"203\") )&& salary >= 5000 && salary <= 7000",
-      "filesetProperties": "",
-      "schema": [
-          {
-            "name": "id",
-            "type": ["string","null"]
-          },
-          {
-            "name": "first name",
-            "type": ["string","null"]
-          },
-          {
-            "name": "last name",
-            "type": ["string","null"]
-          },
-          {
-            "name": "sex",
-            "type": ["string","null"]
-          },
-          {
-            "name": "address",
-            "type": ["string","null"]
-          },
-          {
-            "name": "salary",
-            "type": ["string","null"]
-          }
-        ]
-    },
-    {
-      "compressionCodec": "Snappy",
-      "datasetName": "fileset1",
-      "datasetTargetPaths": "",
-      "expression": " id.startsWith(\"202\") && salary >= 5000 && salary <= 7000",
-      "filesetProperties": "",
-      "schema":[
-          {
-            "name": "id",
-            "type": ["string","null"]
-          },
-          {
-            "name": "first name",
-            "type": ["string","null"]
-          },
-          {
-            "name": "salary",
-            "type": ["string","null"]
-          }
-        ]
-    },
-    {
-      "compressionCodec": "Snappy",
-      "datasetName": "fileset2",
-      "datasetTargetPaths": "",
-      "expression": "(id.startsWith(\"202\") || id.startsWith(\"203\")) && salary >= 5000 && salary < 9000",
-      "filesetProperties": "",
-      "schema": [
-          {
-            "name": "id",
-            "type": ["string","null"]
-          },
-          {
-            "name": "first name",
-            "type": ["string","null"]
-          },
-          {
-            "name": "sex",
-            "type": ["string","null"]
-          },
-          {
-            "name": "address",
-            "type": ["string","null"]
-          },
-          {
-            "name": "salary",
-            "type": ["string","null"]
-          }
-        ]
-    }
-  ],
-  "type": "batchsink"
+	"name": "Multiple File Set Sink",
+	"type": "batchsink",
+	"outputFileSets": [{
+			"compressionCodec": "Snappy",
+			"datasetName": "fileset0",
+			"datasetTargetPaths": "",
+			"expression": "(id.startsWith(\"201\") || id.startsWith(\"202\") || id.startsWith(\"203\") )&& salary >= 5000 && salary <= 7000",
+			"filesetProperties": "",
+			"schema": {
+				"type": "record",
+				"name": "fileset0schema",
+				"fields": [{
+					"name": "id",
+					"type": "string"
+				}, {
+					"name": "first_name",
+					"type": "string"
+				}, {
+					"name": "last_name",
+					"type": "string"
+				}, {
+					"name": "sex",
+					"type": "string"
+				}, {
+					"name": "address",
+					"type": "string"
+				}, {
+					"name": "salary",
+					"type": "double"
+				}]
+			}
+		},
+		{
+			"compressionCodec": "Snappy",
+			"datasetName": "fileset1",
+			"datasetTargetPaths": "",
+			"expression": "(id.startsWith(\"201\") || id.startsWith(\"202\") || id.startsWith(\"203\") )&& salary >= 5000 && salary <= 7000",
+			"filesetProperties": "",
+			"schema": {
+				"type": "record",
+				"name": "fileset1schema",
+				"fields": [{
+					"name": "id",
+					"type": "string"
+				}, {
+					"name": "first_name",
+					"type": "string"
+				}, {
+					"name": "salary",
+					"type": "double"
+				}]
+			}
+		},
+		{
+			"compressionCodec": "Snappy",
+			"datasetName": "fileset2",
+			"datasetTargetPaths": "",
+			"expression": "(id.startsWith(\"201\") || id.startsWith(\"202\") || id.startsWith(\"203\") )&& salary >= 5000 && salary <= 7000",
+			"filesetProperties": "",
+			"schema": {
+				"type": "record",
+				"name": "fileset2schema",
+				"fields": [{
+					"name": "id",
+					"type": "string"
+				}, {
+					"name": "first_name",
+					"type": "string"
+				}, {
+					"name": "sex",
+					"type": "string"
+				}, {
+					"name": "address",
+					"type": "string"
+				}, {
+					"name": "salary",
+					"type": "double"
+				}]
+			}
+		}
+	]
 }
+
 ```
 7.extract out file-path and fields, and parse other file properties
 
