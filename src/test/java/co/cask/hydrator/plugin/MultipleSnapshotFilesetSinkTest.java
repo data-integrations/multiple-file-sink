@@ -17,15 +17,12 @@
 package co.cask.hydrator.plugin;
 
 import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.datapipeline.DataPipelineApp;
 import co.cask.cdap.datapipeline.SmartWorkflow;
 import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
 import co.cask.cdap.etl.mock.test.HydratorTestBase;
@@ -43,8 +40,6 @@ import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import kafka.common.TopicAndPartition;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -58,6 +53,11 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Unit tests for our plugins.
+ * referencing:
+ * https://github.com/caskdata/hydrator-plugins/blob/develop/core-plugins/
+ * src/test/java/co/cask/hydrator/plugin/batch/ETLTPFSTestRun.java
+ *
+ * https://github.com/hydrator/kafka-plugins/blob/develop/src/test/java/co/cask/hydrator/PipelineTest.java
  */
 public class MultipleSnapshotFilesetSinkTest extends HydratorTestBase {
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("multiple-snapshot-artifact", "1.0.0");
@@ -73,7 +73,7 @@ public class MultipleSnapshotFilesetSinkTest extends HydratorTestBase {
 
     // add our plugins artifact with the data-pipeline artifact as its parent.
     // this will make our plugins available to data-pipeline.
-    addPluginArtifact(NamespaceId.DEFAULT.artifact("example-plugins", "1.0.0"),
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("multiple-snapshot-plugins", "1.0.0"),
                       parentArtifact,
                       MultipleSnapshotFilesetSink.class);
 
@@ -81,7 +81,7 @@ public class MultipleSnapshotFilesetSinkTest extends HydratorTestBase {
 
   @Test
   public void testMultipleSnapshot() throws Exception {
-    DataSetManager<Table> inputManager = getDataset("inputParquet");
+//    DataSetManager<Table> inputManager = getDataset("inputParquet");
     Schema recordSchema = Schema.recordOf("record",
                                            Schema.Field.of("id", Schema.of(Schema.Type.STRING)),
                                            Schema.Field.of("first_name", Schema.of(Schema.Type.STRING)),
@@ -100,52 +100,21 @@ public class MultipleSnapshotFilesetSinkTest extends HydratorTestBase {
         .set("salary", 7000)
         .build()
     );
-    MockSource.writeInput(inputManager, input);
-
-
-
-    // create the pipeline config
-    String inputName = "sourceTestInput";
-    String outputName = "sourceTestOutput";
-
-    Map<String, String> sourceProperties = new HashMap<>();
-
-    sourceProperties.put("referenceName", "MultipleFilesetTest");
-    sourceProperties.put("topic", "users");
-    sourceProperties.put("format", "csv");
-
-    ETLStage mockSource= new ETLStage("source", MockSource.getPlugin(outputName));
-
-    Map<String, String> properties = ImmutableMap.of("schema", recordSchema.toString(),
-                                 "name", "outputParquet");
-    ETLStage sink =
-      new ETLStage("sink", new ETLPlugin("MultipleSnapshotFilesetSink",
-                                         BatchSink.PLUGIN_TYPE, properties, null));
-
-    ETLStage mockink = new ETLStage("sink", MockSink.getPlugin(outputName));
-
-    ETLBatchConfig pipelineConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(mockSource)
+    ETLPlugin sinkConfig = new ETLPlugin("SnapshotFileBatchSink",
+                                         BatchSink.PLUGIN_TYPE,
+                                         ImmutableMap.of(
+                                           "schema", recordSchema.toString(),
+                                           "name", "multipleOutput"),
+                                         null);
+    ETLStage sink = new ETLStage("sink", sinkConfig);
+    String inputDatasetName = "input-batchsinktest";
+    ETLStage source = new ETLStage("source", MockSource.getPlugin(inputDatasetName));
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(source)
       .addStage(sink)
-      .addConnection("MockSource", sink.getName())
+      .addConnection(source.getName(), sink.getName())
       .build();
 
-    // create the pipeline
-    ApplicationId pipelineId = NamespaceId.DEFAULT.app("testMultipleFilesetSink");
-    ApplicationManager appManager = deployApplication(pipelineId, new AppRequest<>(APP_ARTIFACT, pipelineConfig));
-
-
-
-    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start();
-    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
-
-    // check the pipeline output
-    DataSetManager<Table> outputManager = getDataset(outputName);
-    Set<StructuredRecord> outputRecords = new HashSet<>();
-    outputRecords.addAll(MockSink.readOutput(outputManager));
-
   }
-
 
 }

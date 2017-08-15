@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.hydrator.plugin.common.StructuredToAvroTransformer;
 import co.cask.hydrator.plugin.model.MultipleFileSets;
 import co.cask.hydrator.plugin.model.OutputFileSet;
 import com.google.gson.Gson;
@@ -76,8 +77,9 @@ public abstract class CustomizedSnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends 
         //FileSetProperties.Builder fileProperties = CustomizedSnapshotFileSet.getBaseProperties(config);
         FileSetProperties.Builder fileProperties = CustomizedSnapshotFileSet.getBaseProperties(outputFileSet);
         Schema cdapSchema = Schema.parseJson(outputFileSet.getSchema().toString());
+        org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(cdapSchema.toString());
         //addFileProperties(fileProperties, cdapSchema.toString());
-        addFileProperties(fileProperties, null);
+        addFileProperties(fileProperties, avroSchema.toString());
         Map<String, String> arguments = new HashMap<>();
         if (config.getFileProperties() != null) {
           arguments = GSON.fromJson(config.getFileProperties(), MAP_TYPE);

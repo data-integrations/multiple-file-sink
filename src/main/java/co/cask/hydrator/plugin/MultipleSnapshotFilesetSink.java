@@ -84,7 +84,7 @@ public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink
     } catch (SchemaParseException e) {
       throw new IllegalArgumentException("Could not parse schema: " + e.getMessage(), e);
     }
-    propertiesBuilder.addAll(FileSetUtil.getAvroCompressionConfiguration(config.compressionCodec, config.schema,
+    propertiesBuilder.addAll(FileSetUtil.getAvroCompressionConfiguration(config.compressionCodec, schema,
                                                                          true));
     propertiesBuilder
       .setInputFormat(AvroKeyInputFormat.class)
@@ -93,8 +93,8 @@ public class MultipleSnapshotFilesetSink extends CustomizedSnapshotFileBatchSink
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", config.schema)
-      .add(DatasetProperties.SCHEMA, config.schema);
+      .setTableProperty("avro.schema.literal", schema)
+      .add(DatasetProperties.SCHEMA, schema);
   }
 
   /**
