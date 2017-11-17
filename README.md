@@ -1,3 +1,7 @@
+<img  alt="Not Available in Cask Market" src="https://cdap-users.herokuapp.com/assets/cm-notavailable.svg"/> ![cdap-batch-sink](https://cdap-users.herokuapp.com/assets/cdap-batch-sink.svg)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Join CDAP community](https://cdap-users.herokuapp.com/badge.svg?t=wrangler)](https://cdap-users.herokuapp.com?t=1)
+
 Done:
 1.Design the input, output, architecture for the sink
 https://wiki.cask.co/display/CE/Multiple+File+Set+Sink
