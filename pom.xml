@@ -19,28 +19,23 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>co.cask</groupId>
-  <artifactId>multiple-fileset</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+  <artifactId>multiple-file-sink</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>Dynamic Partitioner</name>
+  <name>Multiple File Sink</name>
   <description>A set of plugins for dynamic partitioning</description>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <avro.version>1.7.7</avro.version>
     <spark.version>1.6.1</spark.version>
-    <cdap.version>4.2.0</cdap.version>
-    <hydrator.version>1.7.0</hydrator.version>
-    <hadoop.version>2.3.0</hadoop.version>
-    <common-io.version>0.7.1</common-io.version>
-    <parquet-avro.version>1.6.0</parquet-avro.version>
-    <hive-exec.version>1.2.1</hive-exec.version>
-    <widgets.dir>widgets</widgets.dir>
-    <docs.dir>docs</docs.dir>
-    <app.parents>system:cdap-etl-batch[4.2.0-SNAPSHOT,4.4.0-SNAPSHOT),system:cdap-etl-realtime[4.2.0-SNAPSHOT,4.4.0-SNAPSHOT),system:cdap-data-pipeline[4.3.0-SNAPSHOT,4.4.0-SNAPSHOT),system:cdap-data-streams[4.3.0-SNAPSHOT,4.4.0-SNAPSHOT)</app.parents>
-    <!-- this is here because project.basedir evaluates to null in the script build step -->
-    <main.basedir>${project.basedir}</main.basedir>
+    <cdap.version>4.3.2</cdap.version>
+    <hydrator.version>1.8.0</hydrator.version>
+    <hadoop.version>2.4.0</hadoop.version>
+    <parquet-avro.version>1.9.0</parquet-avro.version>
+    <commons-jexl.version>3.0</commons-jexl.version>
+    <commons-lang.version>3.5</commons-lang.version>
   </properties>
 
   <licenses>
@@ -62,9 +57,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:https://github.com/hydrator/kudu-sink.git</connection>
-    <developerConnection>scm:git:git@github.com:hydrator/kudu-sink.git</developerConnection>
-    <url>https://github.com/hydrator/kudu-sink.git</url>
+    <connection>scm:git:https://github.com/hydrator/multiple-file-sink.git</connection>
+    <developerConnection>scm:git:git@github.com:hydrator/multiple-file-sink.git</developerConnection>
+    <url>https://github.com/hydrator/multiple-file-sink.git</url>
     <tag>HEAD</tag>
   </scm>
 
@@ -94,26 +89,26 @@
     </repository>
   </repositories>
 
+  <!-- Include the Maven Plugin Repository -->
+  <pluginRepositories>
+    <pluginRepository>
+      <id>sonatype</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+    </pluginRepository>
+  </pluginRepositories>
+
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-etl-api</artifactId>
       <version>${cdap.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-etl-api-spark</artifactId>
-      <version>${cdap.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-etl-core</artifactId>
       <version>${cdap.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-formats</artifactId>
-      <version>${cdap.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -133,35 +128,14 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.hydrator</groupId>
-      <artifactId>core-plugins</artifactId>
-      <version>${hydrator.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-net</groupId>
-      <artifactId>commons-net</artifactId>
-      <version>3.1</version>
-    </dependency>
-    <dependency>
       <groupId>org.apache.avro</groupId>
-      <artifactId>avro</artifactId>
+      <artifactId>avro-mapred</artifactId>
       <version>${avro.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.parquet</groupId>
       <artifactId>parquet-avro</artifactId>
-      <version>1.8.1</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.avro</groupId>
-          <artifactId>avro</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.parquet</groupId>
-      <artifactId>parquet-avro</artifactId>
-      <version>1.8.1</version>
+      <version>${parquet-avro.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.apache.avro</groupId>
@@ -175,10 +149,6 @@
       <version>${hadoop.version}</version>
       <scope>provided</scope>
       <exclusions>
-        <exclusion>
-          <groupId>commons-logging</groupId>
-          <artifactId>commons-logging</artifactId>
-        </exclusion>
         <exclusion>
           <groupId>log4j</groupId>
           <artifactId>log4j</artifactId>
@@ -282,24 +252,9 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>co.cask.common</groupId>
-      <artifactId>common-io</artifactId>
-      <version>${common-io.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.twitter</groupId>
-      <artifactId>parquet-avro</artifactId>
-      <version>${parquet-avro.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hive</groupId>
-      <artifactId>hive-exec</artifactId>
-      <version>${hive-exec.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.apache.orc</groupId>
       <artifactId>orc-mapreduce</artifactId>
-      <version>1.1.0</version>
+      <version>1.4.1</version>
       <exclusions>
         <exclusion>
           <groupId>org.apache.hadoop</groupId>
@@ -307,11 +262,57 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-formats</artifactId>
+      <version>${cdap.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-jexl3</artifactId>
+      <version>${commons-jexl.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>${commons-lang.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>co.cask</groupId>
+          <artifactId>cdap-maven-plugin</artifactId>
+          <version>1.0.0-SNAPSHOT</version>
+          <configuration>
+            <cdapArtifacts>
+              <parent>system:cdap-data-pipeline[4.3.0,5.0.0)</parent>
+              <parent>system:cdap-data-streams[4.3.0,5.0.0)</parent>
+            </cdapArtifacts>
+          </configuration>
+          <executions>
+            <execution>
+              <id>create-artifact-config</id>
+              <phase>prepare-package</phase>
+              <goals>
+                <goal>create-plugin-json</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
@@ -332,7 +333,7 @@
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
               <!--Only @Plugin classes in the export packages will be included as plugin-->
-              <_exportcontents>co.cask.hydrator.plugin</_exportcontents>
+              <_exportcontents>co.cask.*</_exportcontents>
             </instructions>
           </configuration>
           <executions>
@@ -340,91 +341,6 @@
               <phase>package</phase>
               <goals>
                 <goal>bundle</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-antrun-plugin</artifactId>
-          <version>1.7</version>
-          <executions>
-            <!-- Create the config file for artifact which can be used to deploy the artifact.
-                 Sets the parents field to system:cdap-etl-batch and system:cdap-etl-realtime with whatever
-                 version range is set in the etl.versionRange property.
-                 also sets a widget and doc property for each file contained in the widgets and docs directories. -->
-            <execution>
-              <id>create-artifact-config</id>
-              <phase>prepare-package</phase>
-              <configuration>
-                <target>
-                  <script language="javascript"> <![CDATA[
-                    // for some reason, project.basedir evaluates to null if we just get the property here.
-                    // so we set main.basedir to project.basedir in the pom properties, then main.basedir is used here
-                    // where it evaluates correctly for whatever reason
-                    var baseDir = project.getProperty("main.basedir");
-                    var targetDir = project.getProperty("project.build.directory");
-                    var artifactId = project.getProperty("project.artifactId");
-                    var version = project.getProperty("project.version");
-                    var cfgFile = new java.io.File(targetDir, artifactId + "-" + version + ".json");
-                    if (!cfgFile.exists()) {
-                      cfgFile.createNewFile();
-                    }
-                    var parents = project.getProperty("app.parents").split(",");
-                    var config = {
-                      "parents": [ ],
-                      "properties": {}
-                    }
-                    for (i = 0; i < parents.length; i+=2) {
-                      // because name1[lo,hi],name2[lo,hi] gets split into "name1[lo", "hi]", "name2[lo", "hi]"
-                      // so we have to combine them again
-                      config.parents.push(parents[i] + "," + parents[i+1]);
-                    }
-                    // look in widgets directory for widget config for each plugin
-                    var widgetsDir = new java.io.File(baseDir, project.getProperty("widgets.dir"));
-                    if (widgetsDir.isDirectory()) {
-                      var widgetsFiles = widgetsDir.listFiles();
-                      for (i = 0; i < widgetsFiles.length; i++) {
-                        var widgetsFile = widgetsFiles[i];
-                        if (widgetsFile.isFile()) {
-                          var propertyName = "widgets." + widgetsFile.getName();
-                          // if the filename ends with .json
-                          if (propertyName.indexOf(".json", propertyName.length - 5) !== -1) {
-                            // strip the .json
-                            propertyName = propertyName.slice(0, -5);
-                            var contents = new java.lang.String(java.nio.file.Files.readAllBytes(widgetsFile.toPath()), java.nio.charset.StandardCharsets.UTF_8);
-                            var contentsAsJson = JSON.parse(contents);
-                            config.properties[propertyName] = JSON.stringify(contentsAsJson);
-                          }
-                        }
-                      }
-                    }
-                    // look in the docs directory for docs for each plugin
-                    var docsDir = new java.io.File(baseDir, project.getProperty("docs.dir"));
-                    if (docsDir.isDirectory()) {
-                      var docFiles = docsDir.listFiles();
-                      for (i = 0; i < docFiles.length; i++) {
-                        var docFile = docFiles[i];
-                        if (docFile.isFile()) {
-                          var propertyName = "doc." + docFile.getName();
-                          // if the filename ends with .md
-                          if (propertyName.indexOf(".md", propertyName.length - 3) !== -1) {
-                            // strip the extension
-                            propertyName = propertyName.slice(0, -3);
-                            var contents = new java.lang.String(java.nio.file.Files.readAllBytes(docFile.toPath()), java.nio.charset.StandardCharsets.UTF_8);
-                            config.properties[propertyName] = contents + "";
-                          }
-                        }
-                      }
-                    }
-                    var fw = new java.io.BufferedWriter(new java.io.FileWriter(cfgFile.getAbsoluteFile()));
-                    fw.write(JSON.stringify(config, null, 2));
-                    fw.close();
-                  ]]></script>
-                </target>
-              </configuration>
-              <goals>
-                <goal>run</goal>
               </goals>
             </execution>
           </executions>
@@ -446,7 +362,7 @@
         <configuration>
           <instructions>
             <_exportcontents>
-              co.cask.hydrator.plugin;
+              co.cask.*;
               org.apache.avro.mapreduce;
               parquet.avro.*;
               org.apache.orc.*;
@@ -468,6 +384,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>co.cask</groupId>
+        <artifactId>cdap-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
@@ -537,6 +457,11 @@
                 </goals>
               </execution>
             </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>co.cask</groupId>
+            <artifactId>cdap-maven-plugin</artifactId>
           </plugin>
         </plugins>
       </build>

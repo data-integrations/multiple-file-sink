@@ -1,0 +1,85 @@
+{
+  "metadata": {
+    "spec-version": "1.4"
+  },
+  "display-name": "Multiple File Writer",
+  "configuration-groups": [
+    {
+      "label": "Path and Prefix",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Filename Prefix",
+          "name": "prefix",
+          "widget-attributes" : {
+            "placeholder" : "myfile-output"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Base Path",
+          "name": "path",
+          "widget-attributes" : {
+            "placeholder" : "/data/dir1/dir2/dir3"
+          }
+        }
+      ]
+    },
+    {
+      "label" : "Output Type and Format",
+      "properties" : [
+        {
+          "widget-type": "select",
+          "label": "Output Type",
+          "name": "type",
+          "widget-attributes" : {
+            "default" : "Text",
+            "values" : [ "Avro", "Avro ORC", "Avro Parquet", "Text", "Sequence File"]
+          }
+        },
+        {
+          "widget-type": "select",
+          "label": "Output Format",
+          "name": "format",
+          "widget-attributes" : {
+            "default" : "CSV",
+            "values" : [ "CSV", "JSON"]
+          }
+        },
+        {
+          "widget-type": "select",
+          "label": "Compression",
+          "name": "compression",
+          "widget-attributes" : {
+            "default" : "Snappy",
+            "values" : [ "Snappy", "GZ"]
+          }
+        }
+      ]
+    },
+    {
+      "label": "Assignments",
+      "properties": [
+        {
+          "widget-type": "select",
+          "label": "Assignment type",
+          "name": "filters-type",
+          "widget-attributes": {
+            "default": "None",
+            "values": [
+              "Expression",
+              "Schema",
+              "None"
+            ]
+          }
+        },
+        {
+          "widget-type": "csv",
+          "label": "Assign when condition is true",
+          "name": "filters"
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}
