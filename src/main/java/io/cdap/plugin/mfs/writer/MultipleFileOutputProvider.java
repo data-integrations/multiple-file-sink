@@ -39,10 +39,10 @@ public class MultipleFileOutputProvider implements OutputFormatProvider {
 
     Map<String, String> arguments = context.getArguments().asMap();
     properties.put(OutputFormatDelegator.MFS_RUNTIME_ARGUMENTS, gson.toJson(arguments));
-    properties.put(OutputFormatDelegator.MFS_OUTPUT_TYPE, config.getType());
-    properties.put(OutputFormatDelegator.MFS_FILTER_TYPE, config.getFiltersType());
+    properties.put(OutputFormatDelegator.MFS_OUTPUT_TYPE, config.getType().toString());
+    properties.put(OutputFormatDelegator.MFS_FILTER_TYPE, config.getFiltersType().toString());
     properties.put(ExpressionFilter.EXPRESSION_CONFIG, config.getFiltersAsList()[partitionId]);
-    properties.put(OutputFormatDelegator.MFS_FORMATTER_TYPE, config.getFormat());
+    properties.put(OutputFormatDelegator.MFS_FORMATTER_TYPE, config.getFormat().toString());
     properties.put(DatasetProperties.SCHEMA, context.getInputSchema().toString());
     properties.put(OutputFormatDelegator.MFS_PARTITION_ID, String.valueOf(partitionId));
     properties.put(FileOutputFormat.OUTDIR, path);
