@@ -43,7 +43,7 @@
           "name": "format",
           "widget-attributes" : {
             "default" : "CSV",
-            "values" : [ "CSV", "JSON"]
+            "values" : [ "CSV", "JSON", "Generic Record"]
           }
         },
         {
@@ -63,12 +63,11 @@
         {
           "widget-type": "select",
           "label": "Assignment type",
-          "name": "filters-type",
+          "name": "filtersType",
           "widget-attributes": {
             "default": "None",
             "values": [
               "Expression",
-              "Schema",
               "None"
             ]
           }

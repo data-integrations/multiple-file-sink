@@ -5,8 +5,11 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.FailureCollector;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.plugin.mfs.writer.MultipleFileOutputProvider;
@@ -22,6 +25,14 @@ public class MultipleFileSink extends BatchSink<StructuredRecord, NullWritable, 
   public static final String NAME = "MultipleFileSink";
   public static final String DESC = "Writes incoming records to multiple files.";
   private MultipleFileConfig config;
+
+  @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
+    FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
+    config.validate(failureCollector, inputSchema);
+    failureCollector.getOrThrowException();
+  }
 
   @Override
   public void prepareRun(BatchSinkContext context) throws Exception {
