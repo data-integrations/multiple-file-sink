@@ -32,7 +32,7 @@
     <spark.version>1.6.1</spark.version>
     <cdap.version>6.8.0</cdap.version>
     <hydrator.version>2.2.0</hydrator.version>
-    <hadoop.version>2.10.2</hadoop.version>
+    <hadoop.version>3.2.4</hadoop.version>
     <parquet-avro.version>1.9.0</parquet-avro.version>
     <commons-jexl.version>3.0</commons-jexl.version>
     <commons-lang.version>3.5</commons-lang.version>
